@@ -233,6 +233,7 @@ struct GeneratorOptions
 	const bool verbose = false;
 	const bool separateFiles = false;
 	const bool noStubs = false;
+	const bool noVirtual = false;
 };
 
 // RAII object to help with emitting matching namespace begin and end statements

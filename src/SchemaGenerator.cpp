@@ -1814,7 +1814,12 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	std::string fieldName{ outputField.cppName };
 
 	fieldName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-	output << R"cpp(	virtual service::FieldResult<)cpp" << getOutputCppType(outputField)
+	output << R"cpp(	)cpp";
+	if (!_options.noVirtual) 
+	{
+		output << R"cpp(virtual )cpp";
+	}
+	output << R"cpp(service::FieldResult<)cpp" << getOutputCppType(outputField)
 		<< R"cpp(> )cpp" << outputField.accessor << fieldName << R"cpp((service::FieldParams&& params)cpp";
 
 	for (const auto& argument : outputField.arguments)
@@ -1824,7 +1829,11 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 	}
 
 	output << R"cpp() const)cpp";
-	if (outputField.interfaceField || _isIntrospection || _options.noStubs)
+	if (_options.noVirtual) 
+	{
+		// do nothing; only need the semicolon	
+	}
+	else if (outputField.interfaceField || _isIntrospection || _options.noStubs)
 	{
 		output << R"cpp( = 0)cpp";
 	}
@@ -3351,6 +3360,7 @@ int main(int argc, char** argv)
 	bool noStubs = false;
 	bool verbose = false;
 	bool separateFiles = false;
+	bool noVirtual = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
@@ -3366,6 +3376,7 @@ int main(int argc, char** argv)
 		("source-dir", po::value(&sourceDir), "Target path for the <prefix>Schema.cpp source file")
 		("header-dir", po::value(&headerDir), "Target path for the <prefix>Schema.h header file")
 		("no-stubs", po::bool_switch(&noStubs), "Generate abstract classes without stub implementations")
+		("no-virtual", po::bool_switch(&noVirtual), "Generate classes without virtual members")
 		("separate-files", po::bool_switch(&separateFiles), "Generate separate files for each of the types");
 	positional
 		.add("schema", 1)
@@ -3448,7 +3459,8 @@ int main(int argc, char** argv)
 				},
 				verbose,
 				separateFiles,
-				noStubs
+				noStubs,
+				noVirtual
 			}).Build();
 
 			for (const auto& file : files)
